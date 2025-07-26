@@ -1,2 +1,11 @@
-# hydrawise-watcher
-Service that reports on irrigation
+# 🌿 Hydrawise Watcher
+
+A lightweight Python service that runs on a Raspberry Pi and emails you when a Hydrawise irrigation zone completes its watering cycle.
+
+## 🔧 Features
+
+* Polls Hydrawise API for all zones
+* Detects when a zone has finished watering
+* Sends an email alert with zone name and timestamp
+* Runs only during a configurable time window (default: 4:30am–9:00am)
+* Built for low-power devices like Raspberry Pi 5
