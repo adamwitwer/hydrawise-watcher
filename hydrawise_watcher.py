@@ -1,17 +1,13 @@
 import requests
 import time
-import smtplib
 from datetime import datetime, timedelta
-from email.mime.text import MIMEText
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 API_KEY = os.getenv("HYDRAWISE_API_KEY")
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
-RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL")
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 # CONFIG
 API_URL = f"https://api.hydrawise.com/api/v1/statusschedule.php?api_key={API_KEY}"
@@ -22,21 +18,49 @@ POLL_INTERVAL = 60  # in seconds
 
 tracked_runs = {}  # relay_id -> end_time
 
+# Zone mappings with custom names and emojis
+ZONE_CONFIG = {
+    1: {"name": "Backyard Garden Drip", "emoji": "🍅"},
+    2: {"name": "Backyard Turf", "emoji": "🌱"},
+    3: {"name": "Northern Side", "emoji": "🌲"},
+    4: {"name": "Front Yard Garden Drip", "emoji": "🌺"},
+    5: {"name": "Front Yard Against House Drip", "emoji": "🏡"},
+    6: {"name": "Front Lawn", "emoji": "🌿"}
+}
 
-def send_email(subject, body):
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = RECIPIENT_EMAIL
+
+def send_discord_notification(zone_name, zone_number, completion_time):
+    zone_config = ZONE_CONFIG.get(zone_number, {"name": zone_name, "emoji": "💧"})
+    zone_display_name = zone_config["name"]
+    zone_emoji = zone_config["emoji"]
+    
+    payload = {
+        "embeds": [{
+            "title": f"{zone_emoji} Irrigation Complete",
+            "description": f"**{zone_display_name}** finished watering",
+            "color": 0x00ff00,
+            "fields": [
+                {
+                    "name": "Zone",
+                    "value": f"Zone {zone_number}",
+                    "inline": True
+                },
+                {
+                    "name": "Completion Time",
+                    "value": completion_time,
+                    "inline": True
+                }
+            ],
+            "timestamp": datetime.now().isoformat()
+        }]
+    }
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.send_message(msg)
-        print(f"[{datetime.now()}] Email sent: {subject}")
+        response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
+        response.raise_for_status()
+        print(f"[{datetime.now()}] Discord notification sent: {zone_emoji} {zone_display_name}")
     except Exception as e:
-        print(f"[{datetime.now()}] Failed to send email: {e}")
+        print(f"[{datetime.now()}] Failed to send Discord notification: {e}")
 
 
 def is_in_poll_window():
@@ -64,9 +88,10 @@ def poll_hydrawise():
 
             elif relay_id in tracked_runs:
                 if now >= tracked_runs[relay_id]:
-                    send_email(
-                        f"Zone Finished: {zone_name}",
-                        f"{zone_name} completed its watering cycle at {now.strftime('%H:%M:%S')}."
+                    send_discord_notification(
+                        zone_name,
+                        relay_id,
+                        now.strftime('%H:%M:%S')
                     )
                     del tracked_runs[relay_id]
 
