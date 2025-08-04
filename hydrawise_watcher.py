@@ -29,7 +29,7 @@ ZONE_CONFIG = {
 }
 
 
-def send_discord_notification(zone_name, zone_number, completion_time):
+def send_discord_notification(zone_name, zone_number, completion_time, completion_datetime):
     zone_config = ZONE_CONFIG.get(zone_number, {"name": zone_name, "emoji": "💧"})
     zone_display_name = zone_config["name"]
     zone_emoji = zone_config["emoji"]
@@ -51,7 +51,7 @@ def send_discord_notification(zone_name, zone_number, completion_time):
                     "inline": True
                 }
             ],
-            "timestamp": datetime.now().isoformat()
+            "timestamp": completion_datetime.isoformat()
         }]
     }
 
@@ -88,10 +88,12 @@ def poll_hydrawise():
 
             elif relay_id in tracked_runs:
                 if now >= tracked_runs[relay_id]:
+                    completion_time = tracked_runs[relay_id]
                     send_discord_notification(
                         zone_name,
                         relay_id,
-                        now.strftime('%H:%M:%S')
+                        completion_time.strftime('%H:%M:%S'),
+                        completion_time
                     )
                     del tracked_runs[relay_id]
 

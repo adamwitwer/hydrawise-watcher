@@ -18,7 +18,7 @@ ZONE_CONFIG = {
     6: {"name": "Front Lawn", "emoji": "🌿"}
 }
 
-def send_discord_notification(zone_name, zone_number, completion_time):
+def send_discord_notification(zone_name, zone_number, completion_time, completion_datetime):
     zone_config = ZONE_CONFIG.get(zone_number, {"name": zone_name, "emoji": "💧"})
     zone_display_name = zone_config["name"]
     zone_emoji = zone_config["emoji"]
@@ -40,7 +40,7 @@ def send_discord_notification(zone_name, zone_number, completion_time):
                     "inline": True
                 }
             ],
-            "timestamp": datetime.now().isoformat()
+            "timestamp": completion_datetime.isoformat()
         }]
     }
 
@@ -61,7 +61,8 @@ if __name__ == "__main__":
         exit(1)
     
     # Test with Zone 1 (Backyard Garden Drip)
-    success = send_discord_notification("Backyard Garden Drip", 1, "08:45:30")
+    test_completion_time = datetime.now().replace(hour=8, minute=45, second=30, microsecond=0)
+    success = send_discord_notification("Backyard Garden Drip", 1, "08:45:30", test_completion_time)
     
     if success:
         print("🎉 Test successful! Check your Discord channel.")
