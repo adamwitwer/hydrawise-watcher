@@ -21,11 +21,11 @@ EMAIL_TO = os.getenv("EMAIL_TO")
 # Zone mappings with custom names and emojis
 ZONE_CONFIG = {
     1: {"name": "Backyard Garden Drip", "emoji": "🍅"},
-    2: {"name": "Backyard Turf", "emoji": "🌱"},
-    3: {"name": "Northern Side", "emoji": "🌲"},
-    4: {"name": "Front Yard Garden Drip", "emoji": "🌺"},
-    5: {"name": "Front Yard Against House Drip", "emoji": "🏡"},
-    6: {"name": "Front Lawn", "emoji": "🌿"}
+    2: {"name": "Backyard Turf", "emoji": "⚽"},
+    3: {"name": "Northern Side", "emoji": "🧭"},
+    4: {"name": "Front Yard Garden Drip", "emoji": "🌸"},
+    5: {"name": "Front Yard Against House Drip", "emoji": "🏠"},
+    6: {"name": "Front Lawn", "emoji": "🌳"}
 }
 
 def send_discord_notification(zone_name, zone_number, completion_time, completion_datetime):
@@ -50,7 +50,6 @@ def send_discord_notification(zone_name, zone_number, completion_time, completio
                     "inline": True
                 }
             ],
-            "timestamp": completion_datetime.isoformat()
         }]
     }
 

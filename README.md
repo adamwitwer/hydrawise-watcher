@@ -8,7 +8,9 @@ A lightweight Python service that runs on a Raspberry Pi and sends Discord and e
 * Detects when a zone has finished watering
 * Sends rich Discord webhook notifications with zone-specific emojis
 * Sends email notifications to additional recipients
+* **📊 Weekly summaries**: Automatic weekly irrigation reports every Sunday at 3 PM
 * Custom zone names and unique emojis for each irrigation area
+* Persistent activity tracking with automatic data cleanup
 * Runs only during a configurable time window (default: 4:30am–9:00am)
 * Built for low-power devices like Raspberry Pi 5
 
@@ -16,11 +18,11 @@ A lightweight Python service that runs on a Raspberry Pi and sends Discord and e
 
 Each zone displays with a unique emoji and custom name:
 - 🍅 Zone 1: Backyard Garden Drip
-- 🌱 Zone 2: Backyard Turf
-- 🌲 Zone 3: Northern Side
-- 🌺 Zone 4: Front Yard Garden Drip
-- 🏡 Zone 5: Front Yard Against House Drip
-- 🌿 Zone 6: Front Lawn
+- ⚽ Zone 2: Backyard Turf
+- 🧭 Zone 3: Northern Side
+- 🌸 Zone 4: Front Yard Garden Drip
+- 🏠 Zone 5: Front Yard Against House Drip
+- 🌳 Zone 6: Front Lawn
 
 ## ⚙️ Setup
 
