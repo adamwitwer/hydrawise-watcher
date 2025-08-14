@@ -112,14 +112,14 @@ if __name__ == "__main__":
         print("❌ DISCORD_WEBHOOK_URL not found in .env file")
         exit(1)
     
-    # Test with Zone 1 (Backyard Garden Drip)
+    # Test with actual relay ID for Backyard Garden Drip
     test_completion_time = datetime.now().replace(hour=8, minute=45, second=30, microsecond=0)
     
     print("Testing Discord notification...")
-    discord_success = send_discord_notification("Backyard Garden Drip", 1, "08:45:30", test_completion_time)
+    discord_success = send_discord_notification("Backyard Garden Drip", 5533837, "08:45:30", test_completion_time)
     
     print("\nTesting email notification...")
-    email_success = send_email_notification("Backyard Garden Drip", 1, "08:45:30", test_completion_time)
+    email_success = send_email_notification("Backyard Garden Drip", 5533837, "08:45:30", test_completion_time)
     
     print(f"\n📊 Test Results:")
     print(f"Discord: {'✅ Success' if discord_success else '❌ Failed'}")

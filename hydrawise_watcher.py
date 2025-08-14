@@ -33,14 +33,14 @@ tracked_runs = {}  # relay_id -> end_time
 weekly_activity = []  # List of completed irrigation events
 last_weekly_summary = None  # Track when we last sent a weekly summary
 
-# Zone mappings with custom names and emojis
+# Zone mappings with custom names and emojis (using actual relay IDs from Hydrawise API)
 ZONE_CONFIG = {
-    1: {"name": "Backyard Garden Drip", "emoji": "🍅"},
-    2: {"name": "Backyard Turf", "emoji": "⚽"},
-    3: {"name": "Northern Side", "emoji": "🧭"},
-    4: {"name": "Front Yard Garden Drip", "emoji": "🌸"},
-    5: {"name": "Front Yard Against House Drip", "emoji": "🏠"},
-    6: {"name": "Front Lawn", "emoji": "🌳"}
+    5533837: {"name": "Backyard Garden Drip", "emoji": "🍅"},
+    5533838: {"name": "Backyard Turf", "emoji": "⚽"},
+    5533839: {"name": "Right/Northern Side", "emoji": "🧭"},
+    5533842: {"name": "Front Yard Garden Drip", "emoji": "🌸"},
+    5533846: {"name": "Front Yard Against House Drip", "emoji": "🏠"},
+    5533847: {"name": "Front Lawn", "emoji": "🌳"}
 }
 
 
