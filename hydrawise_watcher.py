@@ -23,8 +23,10 @@ EMAIL_TO = os.getenv("EMAIL_TO")
 # CONFIG
 API_URL = f"https://api.hydrawise.com/api/v1/statusschedule.php?api_key={API_KEY}"
 
-POLL_WINDOW_START = 4  # 4:30 AM to 9:00 AM
-POLL_WINDOW_END = 9
+POLL_WINDOW_START_HOUR = 4   # Start at 4:30 AM
+POLL_WINDOW_START_MINUTE = 30
+POLL_WINDOW_END_HOUR = 9     # End at 9:00 AM
+POLL_WINDOW_END_MINUTE = 0
 POLL_INTERVAL = 60  # in seconds
 WEEKLY_SUMMARY_HOUR = 15  # 3 PM on Sunday
 WEEKLY_DATA_FILE = "weekly_activity.json"
@@ -199,7 +201,11 @@ def generate_weekly_summary():
             }
         zone_stats[zone_num]['count'] += 1
         zone_stats[zone_num]['dates'].append(event['date'])
-    
+
+    # Deduplicate dates for each zone, preserving order
+    for stats in zone_stats.values():
+        stats['dates'] = list(dict.fromkeys(stats['dates']))
+
     return {
         'total_events': len(week_events),
         'zone_stats': zone_stats,
@@ -216,7 +222,7 @@ def send_weekly_discord_summary(summary):
         times_text = "time" if stats['count'] == 1 else "times"
         fields.append({
             "name": f"{stats['emoji']} {stats['name']}",
-            "value": f"Watered {stats['count']} {times_text}",
+            "value": f"Watered {stats['count']} {times_text} ({', '.join(stats['dates'])})",
             "inline": True
         })
     
@@ -258,7 +264,7 @@ Zone Activity:
     
     for zone_num, stats in sorted(summary['zone_stats'].items()):
         times_text = "time" if stats['count'] == 1 else "times"
-        body += f"{stats['emoji']} {stats['name']}: {stats['count']} {times_text}\n"
+        body += f"{stats['emoji']} {stats['name']}: {stats['count']} {times_text} ({', '.join(stats['dates'])})\n"
     
     body += f"""
 
@@ -304,7 +310,19 @@ def check_and_send_weekly_summary():
 
 def is_in_poll_window():
     now = datetime.now()
-    return POLL_WINDOW_START <= now.hour < POLL_WINDOW_END
+    start = now.replace(
+        hour=POLL_WINDOW_START_HOUR,
+        minute=POLL_WINDOW_START_MINUTE,
+        second=0,
+        microsecond=0
+    )
+    end = now.replace(
+        hour=POLL_WINDOW_END_HOUR,
+        minute=POLL_WINDOW_END_MINUTE,
+        second=0,
+        microsecond=0
+    )
+    return start <= now < end
 
 
 def poll_hydrawise():
