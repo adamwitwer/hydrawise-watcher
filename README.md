@@ -17,19 +17,23 @@ A lightweight Python service that runs on a Raspberry Pi and sends Discord and e
 
 ## 🎨 Zone Configuration
 
-Each zone displays with a unique emoji and custom name:
-- 🍅 Zone 1: Backyard Garden Drip
-- ⚽ Zone 2: Backyard Turf
-- 🧭 Zone 3: Northern Side
-- 🌸 Zone 4: Front Yard Garden Drip
-- 🏠 Zone 5: Front Yard Against House Drip
-- 🌳 Zone 6: Front Lawn
+Each zone displays with a unique emoji and custom name, set in `ZONE_CONFIG` in
+`hydrawise_watcher.py`. Zones are keyed by their Hydrawise **relay ID** (e.g. `5533837`),
+not by zone number. A relay that isn't listed falls back to its Hydrawise name with 💧.
+
+- 🍅 Backyard Garden Drip
+- ⚽ Backyard Turf
+- 🧭 Right/Northern Side
+- 🌸 Front Yard Garden Drip
+- 🏠 Front Yard Against House Drip
+- 🌳 Front Lawn
 
 ## ⚙️ Setup
 
-1. Install dependencies:
+1. Create a venv and install dependencies:
    ```bash
-   pip install -r requirements.txt
+   python3 -m venv venv
+   venv/bin/pip install -r requirements.txt
    ```
 
 2. Create a `.env` file with your configuration:
@@ -54,10 +58,46 @@ Each zone displays with a unique emoji and custom name:
    - Create a new webhook for your irrigation channel
    - Copy the webhook URL to your `.env` file
 
-4. Run the service:
+4. Check the Discord and email settings. This sends a **real** sample notification to both:
    ```bash
-   python hydrawise_watcher.py
+   venv/bin/python test_discord.py
    ```
+
+5. Run the service:
+   ```bash
+   venv/bin/python hydrawise_watcher.py
+   ```
+
+## 🍓 Deployment (Raspberry Pi)
+
+The watcher runs on the Pi as a systemd service from a git clone at
+`~/Projects/hydrawise-watcher`, with its own `venv/` and `.env`. The unit file is in
+`systemd/hydrawise-watcher.service`. To install it:
+
+```bash
+sudo cp systemd/hydrawise-watcher.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now hydrawise-watcher
+```
+
+To deploy an update:
+
+```bash
+cd ~/Projects/hydrawise-watcher
+git pull
+venv/bin/pip install -q -r requirements.txt
+sudo systemctl restart hydrawise-watcher
+```
+
+Check that it came back up:
+
+```bash
+systemctl is-active hydrawise-watcher
+journalctl -u hydrawise-watcher -n 20 --no-pager
+```
+
+Completed runs are saved to `weekly_activity.json` (gitignored), which keeps the last
+8 days for the Sunday summary.
 
 ## ❄️ Winter / Off Season
 

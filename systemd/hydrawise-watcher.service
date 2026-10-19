@@ -1,0 +1,13 @@
+[Unit]
+Description=Hydrawise Watcher
+After=network.target
+
+[Service]
+ExecStart=/home/adam/Projects/hydrawise-watcher/venv/bin/python /home/adam/Projects/hydrawise-watcher/hydrawise_watcher.py
+WorkingDirectory=/home/adam/Projects/hydrawise-watcher
+Restart=on-failure
+User=adam
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
