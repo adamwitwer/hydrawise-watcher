@@ -48,7 +48,8 @@ tracked_runs = {}  # relay_id -> end_time
 weekly_activity = []  # List of completed irrigation events
 last_weekly_summary = None  # Track when we last sent a weekly summary
 
-# Zone mappings with custom names and emojis (using actual relay IDs from Hydrawise API)
+# Zone mappings with custom names and emojis, keyed by the API's relay_id. The zone
+# number shown in notifications is the API's "relay" field (1-6).
 ZONE_CONFIG = {
     5533837: {"name": "Backyard Garden Drip", "emoji": "🍅"},
     5533838: {"name": "Backyard Turf", "emoji": "⚽"},
@@ -59,8 +60,8 @@ ZONE_CONFIG = {
 }
 
 
-def send_discord_notification(zone_name, zone_number, completion_time, completion_datetime):
-    zone_config = ZONE_CONFIG.get(zone_number, {"name": zone_name, "emoji": "💧"})
+def send_discord_notification(zone_name, relay_id, zone_number, completion_time, completion_datetime):
+    zone_config = ZONE_CONFIG.get(relay_id, {"name": zone_name, "emoji": "💧"})
     zone_display_name = zone_config["name"]
     zone_emoji = zone_config["emoji"]
     
@@ -94,12 +95,12 @@ def send_discord_notification(zone_name, zone_number, completion_time, completio
         return False
 
 
-def send_email_notification(zone_name, zone_number, completion_time, completion_datetime):
+def send_email_notification(zone_name, relay_id, zone_number, completion_time, completion_datetime):
     if not all([EMAIL_SMTP_SERVER, EMAIL_USERNAME, EMAIL_PASSWORD, EMAIL_TO]):
         print(f"[{datetime.now()}] Email configuration incomplete, skipping email notification")
         return False
         
-    zone_config = ZONE_CONFIG.get(zone_number, {"name": zone_name, "emoji": "💧"})
+    zone_config = ZONE_CONFIG.get(relay_id, {"name": zone_name, "emoji": "💧"})
     zone_display_name = zone_config["name"]
     zone_emoji = zone_config["emoji"]
     
@@ -165,8 +166,8 @@ def save_weekly_data():
         print(f"[{datetime.now()}] Error saving weekly data: {e}")
 
 
-def add_irrigation_event(zone_name, zone_number, completion_time, completion_datetime):
-    zone_config = ZONE_CONFIG.get(zone_number, {"name": zone_name, "emoji": "💧"})
+def add_irrigation_event(zone_name, relay_id, zone_number, completion_time, completion_datetime):
+    zone_config = ZONE_CONFIG.get(relay_id, {"name": zone_name, "emoji": "💧"})
     event = {
         'zone_name': zone_config["name"],
         'zone_number': zone_number,
@@ -398,6 +399,7 @@ def poll_hydrawise():
 
         for zone in data.get("relays", []):
             relay_id = zone["relay_id"]
+            zone_number = zone["relay"]
             zone_name = zone["name"]
             seconds_until_next_run = zone["time"]
             run_duration = zone["run"]
@@ -414,11 +416,11 @@ def poll_hydrawise():
                     completion_time_str = completion_time.strftime('%H:%M:%S')
                     
                     # Send both Discord and email notifications
-                    send_discord_notification(zone_name, relay_id, completion_time_str, completion_time)
-                    send_email_notification(zone_name, relay_id, completion_time_str, completion_time)
+                    send_discord_notification(zone_name, relay_id, zone_number, completion_time_str, completion_time)
+                    send_email_notification(zone_name, relay_id, zone_number, completion_time_str, completion_time)
                     
                     # Add to weekly activity tracking
-                    add_irrigation_event(zone_name, relay_id, completion_time_str, completion_time)
+                    add_irrigation_event(zone_name, relay_id, zone_number, completion_time_str, completion_time)
                     
                     del tracked_runs[relay_id]
 

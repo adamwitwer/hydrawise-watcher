@@ -35,7 +35,9 @@ again. That is expected and not a bug. If nothing arrives in spring, check
 ## Conventions and gotchas
 
 - **Zones are keyed by relay ID, not zone number.** `ZONE_CONFIG` uses the API's `relay_id`
-  (e.g. `5533837`). Keying by 1–6 compiles, but every zone silently falls back to 💧.
+  (e.g. `5533837`). Keying by 1–6 compiles, but every zone silently falls back to 💧. The
+  zone number shown in notifications and stored in `weekly_activity.json` is the API's
+  `relay` field (1–6). The send functions take both `relay_id` and `zone_number`.
 - **Env config is read at import.** `SEASON_START`/`SEASON_END` are parsed into
   `(month, day)` tuples when the module loads, so a malformed value fails at startup, not
   months later. Any date change needs a restart.
@@ -43,12 +45,14 @@ again. That is expected and not a bug. If nothing arrives in spring, check
   and `dotenv` in `sys.modules` before importing `hydrawise_watcher`. The module has no
   import-time side effects beyond `load_dotenv()`.
 - **`test_discord.py` sends real messages** to the Discord channel and the email
-  recipient. Don't run it without asking. It keeps its own copy of the send functions, and
-  its `ZONE_CONFIG` is stale (keyed 1–6).
+  recipient. Don't run it without asking. It imports the send functions from
+  `hydrawise_watcher.py`, so keep it that way rather than copying them back in.
 - `weekly_activity.json` is runtime state on the Pi (last 8 days of completed runs). It's
   gitignored. Don't delete it, or the next Sunday summary is lost.
 
-## Known quirks (not fixed)
+## Waiting on spring 2027
 
-- Notifications show `Zone 5533837` (the relay ID) in the "Zone" field instead of a zone
-  number. That's because `relay_id` is passed in as `zone_number`.
+The zone-number fix (2026-10-19) has been checked only offline, with `requests` and
+`smtplib` stubbed. It hasn't run against a real watering yet. After the first run in
+April, confirm that Discord shows `Zone 1`–`Zone 6` (not `Zone 5533837`) and that the
+first Sunday summary looks right.
