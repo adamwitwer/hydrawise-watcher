@@ -31,6 +31,19 @@ POLL_INTERVAL = 60  # in seconds
 WEEKLY_SUMMARY_HOUR = 15  # 3 PM on Sunday
 WEEKLY_DATA_FILE = "weekly_activity.json"
 
+
+def parse_month_day(value):
+    if not value:
+        return None
+    month, day = value.split("-")
+    return int(month), int(day)
+
+
+# Irrigation season as MM-DD, inclusive (e.g. 04-01 to 10-15). Outside it the
+# watcher sleeps until the next season start. Unset means always on.
+SEASON_START = parse_month_day(os.getenv("SEASON_START"))
+SEASON_END = parse_month_day(os.getenv("SEASON_END"))
+
 tracked_runs = {}  # relay_id -> end_time
 weekly_activity = []  # List of completed irrigation events
 last_weekly_summary = None  # Track when we last sent a weekly summary
@@ -308,6 +321,58 @@ def check_and_send_weekly_summary():
         save_weekly_data()
 
 
+def send_discord_status(title, description):
+    payload = {
+        "embeds": [{
+            "title": title,
+            "description": description,
+            "color": 0x95a5a6,
+        }]
+    }
+
+    try:
+        response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
+        response.raise_for_status()
+        print(f"[{datetime.now()}] Discord status sent: {title}")
+        return True
+    except Exception as e:
+        print(f"[{datetime.now()}] Failed to send Discord status: {e}")
+        return False
+
+
+def is_in_season(now=None):
+    if not (SEASON_START and SEASON_END):
+        return True
+    now = now or datetime.now()
+    today = (now.month, now.day)
+    if SEASON_START <= SEASON_END:
+        return SEASON_START <= today <= SEASON_END
+    # Season wraps the new year (e.g. 10-01 to 03-31)
+    return today >= SEASON_START or today <= SEASON_END
+
+
+def next_season_start(now):
+    month, day = SEASON_START
+    start = now.replace(month=month, day=day, hour=0, minute=0, second=0, microsecond=0)
+    if start <= now:
+        start = start.replace(year=start.year + 1)
+    return start
+
+
+def wait_out_off_season():
+    resume_at = next_season_start(datetime.now())
+    resume_str = resume_at.strftime('%B %d, %Y')
+    print(f"[{datetime.now()}] Off season. Sleeping until {resume_str}")
+    send_discord_status("💤 Watcher Off for the Season", f"Irrigation is winterized. Monitoring resumes **{resume_str}**.")
+
+    # Sleep in hourly chunks so a clock change or suspend can't overshoot by much
+    while datetime.now() < resume_at:
+        time.sleep(max(1, min(3600, (resume_at - datetime.now()).total_seconds())))
+
+    print(f"[{datetime.now()}] Irrigation season started. Resuming monitoring")
+    send_discord_status("🌱 Watcher Back On", "Irrigation season has started. Monitoring has resumed.")
+
+
 def is_in_poll_window():
     now = datetime.now()
     start = now.replace(
@@ -369,6 +434,10 @@ if __name__ == "__main__":
     print(f"[{datetime.now()}] Loaded {len(weekly_activity)} past irrigation events")
     
     while True:
+        if not is_in_season():
+            wait_out_off_season()
+            continue
+
         # Check for weekly summary (runs once per hour on Sunday at 3 PM)
         check_and_send_weekly_summary()
         
